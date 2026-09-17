@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conveyor Belt Monitoring System</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f2f2f2;
+            margin: 0;
+        }
+
+        header {
+            background: #222;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .cards {
+            display: flex;
+            justify-content: space-around;
+            margin: 25px 0;
+        }
+
+        .card {
+            background: #eeeeee;
+            padding: 20px;
+            width: 20%;
+            border-radius: 8px;
+        }
+
+        input {
+            margin: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: #222;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #preview {
+            max-width: 400px;
+            max-height: 300px;
+            margin: 20px;
+        }
+
+        #result {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>CONVEYOR BELT MONITORING SYSTEM</h1>
+    <p>Iron Ore Mining Industry</p>
+    <p>Intelligent Monitoring and Prediction of Conveyor Belt Joint Rupture and Damages</p>
+</header>
+
+<div class="container">
+
+    <div class="cards">
+        <div class="card">
+            <h3>Belt Status</h3>
+            <p id="beltStatus">NORMAL</p>
+        </div>
+
+        <div class="card">
+            <h3>Joint Status</h3>
+            <p id="jointStatus">GOOD</p>
+        </div>
+
+        <div class="card">
+            <h3>Damage Count</h3>
+            <p id="damageCount">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Risk Level</h3>
+            <p id="riskLevel">LOW</p>
+        </div>
+    </div>
+
+    <h2>Upload Conveyor Belt Image</h2>
+
+    <input type="file" id="imageInput" accept="image/*">
+
+    <br>
+
+    <button onclick="analyzeImage()">Analyze Image</button>
+
+    <br>
+
+    <img id="preview" style="display:none;">
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+
+function analyzeImage() {
+
+    const input = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+    const result = document.getElementById("result");
+
+    if (input.files.length === 0) {
+        result.innerHTML = "Please upload an image.";
+        return;
+    }
+
+    const file = input.files[0];
+
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+
+    result.innerHTML = "AI Model is analyzing the image...";
+
+    /*
+       Backend AI connection will be added here.
+       The trained conveyor_model.keras will be connected
+       through the Python backend.
+    */
+
+   var formData = new FormData();
+formData.append("image", file);
+
+fetch("http://127.0.0.1:5000/predict", {
+    method: "POST",
+    body: formData
+})
+.then(response => response.json())
+.then(data => {
+    var prediction = data.prediction.toLowerCase();
+
+result.innerHTML =
+    "Prediction: " + data.prediction + "<br>" +
+    data.message;
+
+if (prediction.indexOf("normal") !== -1) {
+    document.getElementById("beltStatus").innerHTML = "NORMAL";
+    document.getElementById("jointStatus").innerHTML = "GOOD";
+    document.getElementById("damageCount").innerHTML = "0";
+    document.getElementById("riskLevel").innerHTML = "LOW";
+
+} else if (prediction.indexOf("scratch") !== -1) {
+    document.getElementById("beltStatus").innerHTML = "DAMAGED";
+    document.getElementById("jointStatus").innerHTML = "ATTENTION";
+    document.getElementById("damageCount").innerHTML = "1";
+    document.getElementById("riskLevel").innerHTML = "MEDIUM";
+
+} else if (prediction.indexOf("crack") !== -1) {
+    document.getElementById("beltStatus").innerHTML = "DAMAGED";
+    document.getElementById("jointStatus").innerHTML = "WARNING";
+    document.getElementById("damageCount").innerHTML = "1";
+    document.getElementById("riskLevel").innerHTML = "HIGH";
+
+} else if (prediction.indexOf("rupture") !== -1) {
+    document.getElementById("beltStatus").innerHTML = "CRITICAL";
+    document.getElementById("jointStatus").innerHTML = "RUPTURE";
+    document.getElementById("damageCount").innerHTML = "1";
+    document.getElementById("riskLevel").innerHTML = "HIGH";
+
+} else {
+    document.getElementById("beltStatus").innerHTML = "INVALID";
+    document.getElementById("jointStatus").innerHTML = "INVALID";
+    document.getElementById("damageCount").innerHTML = "N/A";
+    document.getElementById("riskLevel").innerHTML = "UNKNOWN";
+}
+})
+.catch(error => {
+    result.innerHTML = "Backend connection error.";
+});
+}
+
+</script>
+
+</body>
+</html>
